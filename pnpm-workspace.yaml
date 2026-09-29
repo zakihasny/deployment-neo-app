@@ -1,0 +1,12 @@
+packages:
+  - .
+
+confirmModulesPurge: false
+nodeLinker: hoisted
+packageImportMethod: copy
+
+allowBuilds:
+  esbuild: true
+
+overrides:
+  rollup: npm:@rollup/wasm-node@4.63.5

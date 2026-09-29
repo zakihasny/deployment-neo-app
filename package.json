@@ -1,0 +1,31 @@
+{
+  "name": "test-deployment-neo-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "preinstall": "node scripts/build-tokens.mjs",
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "tokens:build": "node scripts/build-tokens.mjs",
+    "tokens:check": "node scripts/build-tokens.mjs --check",
+    "typecheck": "nuxt typecheck",
+    "check": "pnpm tokens:check && pnpm typecheck && node scripts/check.mjs"
+  },
+  "dependencies": {
+    "nuxt": "4.5.2",
+    "pg": "8.23.0"
+  },
+  "devDependencies": {
+    "@rollup/wasm-node": "4.63.5",
+    "@types/pg": "8.23.1",
+    "typescript": "5.9.3",
+    "vue-tsc": "3.3.11"
+  }
+}
