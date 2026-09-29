@@ -2,18 +2,6 @@
 type TabKey = 'services' | 'databases' | 'deployments'
 type CellValue = string | number
 
-type DatabaseStatus = {
-  connected: boolean
-  configured: boolean
-  database: string | null
-  expectedVersion: number
-  versionMajor: number | null
-  versionLabel: string | null
-  latencyMs: number | null
-  checkedAt: string
-  message: string
-}
-
 type SampleData = {
   generatedAt: string
   services: Record<string, CellValue>[]
@@ -81,19 +69,54 @@ const tables: Record<TabKey, TableDefinition> = {
 
 const activeTab = ref<TabKey>('services')
 const tabRefs = ref<HTMLButtonElement[]>([])
-const { data: databaseStatus, pending: databasePending, refresh: refreshDatabaseStatus } = await useFetch<DatabaseStatus>('/api/database-status')
-const { data: sampleData } = await useFetch<SampleData>('/api/sample-data')
+
+const pick = <T>(values: readonly T[]) => values[Math.floor(Math.random() * values.length)] as T
+const randomInt = (minimum: number, maximum: number) => Math.floor(Math.random() * (maximum - minimum)) + minimum
+const shortId = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`
+
+function createSampleData(): SampleData {
+  const serviceNames = ['portal-api', 'billing-worker', 'identity-web', 'asset-sync', 'reporting-api', 'event-router']
+  const databaseNames = ['operations', 'customer_portal', 'billing', 'analytics', 'audit_log', 'identity']
+  const owners = ['Platform', 'Finance', 'Operations', 'Security', 'Data', 'Customer Experience']
+  const regions = ['Jakarta', 'West Java', 'Central Java']
+
+  return {
+    generatedAt: new Date().toISOString(),
+    services: Array.from({ length: 8 }, (_, index) => ({
+      id: shortId('SVC'),
+      name: `${pick(serviceNames)}-${index + 1}`,
+      region: pick(regions),
+      vcpu: pick([1, 2, 2, 4]),
+      memory: pick(['1 GB', '2 GB', '4 GB', '8 GB']),
+      status: pick(['Running', 'Running', 'Running', 'Warning'])
+    })),
+    databases: Array.from({ length: 8 }, (_, index) => ({
+      id: shortId('DB'),
+      name: `${pick(databaseNames)}_${index + 1}`,
+      owner: pick(owners),
+      connections: randomInt(3, 86),
+      storage: `${randomInt(2, 48)} GB`,
+      status: pick(['Healthy', 'Healthy', 'Healthy', 'Degraded'])
+    })),
+    deployments: Array.from({ length: 8 }, () => ({
+      id: shortId('EVT'),
+      service: pick(serviceNames),
+      revision: Math.random().toString(16).slice(2, 9),
+      trigger: pick(['Git push', 'Manual', 'Scheduled']),
+      duration: `${randomInt(18, 241)} s`,
+      status: pick(['Succeeded', 'Succeeded', 'Succeeded', 'Pending', 'Failed'])
+    }))
+  }
+}
+
+const sampleData = ref<SampleData>(createSampleData())
 
 const activeTable = computed(() => tables[activeTab.value])
-const activeRows = computed(() => sampleData.value?.[activeTab.value] ?? [])
-const statusState = computed(() => {
-  if (databasePending.value) return 'checking'
-  return databaseStatus.value?.connected ? 'connected' : 'disconnected'
-})
-const statusTitle = computed(() => {
-  if (statusState.value === 'checking') return 'Checking connection'
-  return statusState.value === 'connected' ? 'Connected' : 'Not connected'
-})
+const activeRows = computed(() => sampleData.value[activeTab.value])
+
+function regenerateSampleData() {
+  sampleData.value = createSampleData()
+}
 
 function activateTab(key: TabKey, index?: number) {
   activeTab.value = key
@@ -111,55 +134,41 @@ function onTabKeydown(event: KeyboardEvent, index: number) {
   const nextTab = tabs[nextIndex]
   if (nextTab) activateTab(nextTab.key, nextIndex)
 }
-
-let statusTimer: ReturnType<typeof setInterval> | undefined
-onMounted(() => {
-  statusTimer = setInterval(() => refreshDatabaseStatus(), 30000)
-})
-onBeforeUnmount(() => {
-  if (statusTimer) clearInterval(statusTimer)
-})
 </script>
 
 <template>
   <main class="page-shell">
     <section class="hero" aria-labelledby="page-title">
       <div class="hero__copy">
-        <p class="eyebrow">NEO App · PostgreSQL connectivity test</p>
+        <p class="eyebrow">NEO App · Static deployment test</p>
         <h1 id="page-title"><span>TEST FE</span> WITH DB</h1>
         <p class="hero__lead">
-          A focused deployment surface that validates a PostgreSQL 16 connection and presents three generated operational datasets.
+          A static front-end deployment surface with three browser-generated operational datasets and no server or database dependency.
         </p>
       </div>
 
       <aside
-        class="database-card"
-        :class="`database-card--${statusState}`"
+        class="database-card database-card--connected"
         aria-live="polite"
-        aria-label="PostgreSQL connection status"
+        aria-label="Static deployment status"
       >
         <div class="database-card__header">
-          <p class="database-card__label">Database connection</p>
-          <span class="database-card__version">PostgreSQL 16</span>
+          <p class="database-card__label">Runtime mode</p>
+          <span class="database-card__version">Static site</span>
         </div>
 
         <div class="database-card__status">
           <span class="status-dot" aria-hidden="true" />
           <div class="status-copy">
-            <strong>{{ statusTitle }}</strong>
-            <span>{{ databaseStatus?.message ?? 'Waiting for the first health check.' }}</span>
+            <strong>Ready</strong>
+            <span>Runs entirely in the browser. No database connection is required.</span>
           </div>
         </div>
 
         <div class="database-card__footer">
-          <span class="database-card__meta">
-            <template v-if="databaseStatus?.connected">
-              {{ databaseStatus.database }} · {{ databaseStatus.latencyMs }} ms
-            </template>
-            <template v-else>Read-only connection probe</template>
-          </span>
-          <button class="btn" type="button" :disabled="databasePending" @click="refreshDatabaseStatus()">
-            {{ databasePending ? 'Checking…' : 'Check again' }}
+          <span class="database-card__meta">Client-side generated data</span>
+          <button class="btn" type="button" @click="regenerateSampleData">
+            Regenerate data
           </button>
         </div>
       </aside>
@@ -169,7 +178,7 @@ onBeforeUnmount(() => {
       <div class="section-heading">
         <div>
           <h2 id="sample-data-title">Sample operational data</h2>
-          <p>Randomized on each server response. These rows are not stored in PostgreSQL.</p>
+          <p>Randomized in your browser. These rows are not sent to or stored in a database.</p>
         </div>
         <span class="sample-badge">Sample only</span>
       </div>
@@ -214,8 +223,8 @@ onBeforeUnmount(() => {
     </section>
 
     <footer class="page-footer">
-      <span>Connection probe: read-only PostgreSQL query</span>
-      <span>Sample generated {{ sampleData?.generatedAt ? new Date(sampleData.generatedAt).toLocaleString('en-GB') : 'on request' }}</span>
+      <span>Runtime: static HTML, CSS and JavaScript</span>
+      <span>Sample generated {{ new Date(sampleData.generatedAt).toLocaleString('en-GB') }}</span>
     </footer>
   </main>
 </template>

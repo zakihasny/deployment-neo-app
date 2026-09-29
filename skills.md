@@ -2,16 +2,15 @@
 
 ## Scope
 
-This project is a standalone Nuxt Web Service for validating a read-only connection to NEO DB PostgreSQL 16. It contains one hero, one accessible database status indicator, and exactly three secondary tabs with generated sample tables. Sample rows are never written to PostgreSQL.
+This branch is a standalone Nuxt Static Site for NEO App. It contains one hero, one accessible static-runtime status card, and exactly three secondary tabs with browser-generated sample tables. It must not call a server endpoint or database.
 
 ## Runtime contract
 
-- Node.js 22+, Nuxt 4 and Nitro node-server preset.
-- Container listens on `0.0.0.0:3000`; NEO App Web Service must target port 3000.
-- `GET /healthz` is process liveness and never depends on the database.
-- `GET /api/database-status` performs a bounded read-only query using `DATABASE_URL` and never exposes connection errors or credentials.
-- The real `DATABASE_URL` belongs in NEO App environment variables or managed-resource binding, never source control.
-- NEO DB must use PostgreSQL 16. Keep its public endpoint disabled unless an explicitly reviewed external-access requirement exists.
+- Node.js 22+, Nuxt 4, SPA rendering and Nitro static preset.
+- `pnpm build` must generate deployable files in `.output/public`.
+- Generate all sample data inside the browser without network requests.
+- Do not add `server/`, `DATABASE_URL`, PostgreSQL drivers, Docker, cron, queues or other runtime infrastructure to this branch.
+- Keep `main` as the Web Service/PostgreSQL variant; static-only changes belong on branch `static`.
 
 ## Design contract
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-29 — static branch
+
+- Converted the Nuxt application to an SPA generated with the Nitro static preset.
+- Moved all randomized sample-data generation into the browser.
+- Replaced the database probe with an explicit static-runtime status card.
+- Removed PostgreSQL, server endpoints, Docker, Compose and environment configuration.
+
 ## 2026-09-28
 
 - Created the Nuxt Web Service baseline for NEO App and NEO DB PostgreSQL 16.

@@ -1,15 +1,15 @@
-# TEST FE WITH DB
+# TEST FE WITH DB — Static Site
 
-Nuxt Web Service prepared for NEO App with a read-only PostgreSQL 16 connectivity indicator and three randomized sample-data tables.
+Static Nuxt front end prepared for NEO App with three randomized sample-data tables. This branch does not use a server runtime, API endpoint, environment variable, or database.
 
 ## What it doesp
 
 - Hero title: `TEST FE WITH DB`.
-- Green `Connected` state when `DATABASE_URL` answers a PostgreSQL query.
-- Red `Not connected` state when configuration or connectivity fails.
+- Green `Ready` state that identifies this build as a static site.
 - Three accessible secondary tabs: Service inventory, Database workloads and Deployment events.
-- Generated sample rows are returned by the Web Service and are not stored in PostgreSQL.
-- `GET /healthz` remains independent from database readiness.
+- Eight sample rows per table are generated directly in the browser.
+- The `Regenerate data` button creates a fresh sample without a network request.
+- No PostgreSQL connection or server-side endpoint exists in this branch.
 
 ## Local development
 
@@ -19,32 +19,25 @@ pnpm tokens:build
 pnpm dev --host 127.0.0.1 --port 5175
 ```
 
-Without `DATABASE_URL`, the page intentionally shows a red database status. For a local PostgreSQL 16 test:
-
-```sh
-docker compose up --build
-```
-
-Open `http://127.0.0.1:3000`.
+Open `http://127.0.0.1:5175`.
 
 ## Verification
 
 ```sh
 pnpm check
 pnpm build
+pnpm preview
 ```
+
+The production-ready static files are generated in `.output/public`. The preview command serves that directory on `http://127.0.0.1:4173` by default.
 
 ## NEO App configuration
 
-The NEO App dashboard and MCP were inspected without creating or deploying resources. The applicable configuration is:
+1. Select **Static Site** in the NEO App project.
+2. Use repository `https://github.com/zakihasny/deployment-neo-app`.
+3. Select branch `static`.
+4. Railpack can run the package build script, which executes `nuxt generate`.
+5. The publish directory is `.output/public` when the dashboard requests one.
+6. Do not configure `DATABASE_URL`; this branch has no database dependency.
 
-1. Create NEO DB in the same project/environment.
-2. Select PostgreSQL 16. For this test, Single instance and 10 GB are sufficient; automated backups are recommended.
-3. Keep Public secure endpoint disabled when Web and DB communicate inside the same project network.
-4. Create a Web service using **Build file** with this repository and `Dockerfile` at the project root. Local source ZIP is also supported by the dashboard.
-5. Configure container port `3000` and health path `/healthz`.
-6. Bind the database connection URL to the Web Service as `DATABASE_URL`. Do not place the real URL in Git or image build arguments.
-7. Deploy the Web Service only after the NEO DB resource is ready.
-8. Verify `/healthz`, then open the page and confirm the indicator shows `Connected` and PostgreSQL 16.
-
-The source is prepared locally only. No NEO App service or database has been created or deployed by this project generation task.
+The `main` branch remains the Web Service and PostgreSQL version. No NEO App resource is created or deployed by this branch.
