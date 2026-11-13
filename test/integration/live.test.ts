@@ -99,7 +99,7 @@ test('real driver, compiled HTTP application, dependency failure and recovery', 
   const started = Date.now(), unavailable = await status()
   assert.equal(unavailable.connected, false); assert.ok(Date.now() - started < 6500, 'Probe must remain bounded')
   assert.equal((await fetch('http://127.0.0.1:13000/healthz')).status, 200)
-  compose('start', '--wait', '--wait-timeout', '120', engine)
+  compose('start', engine)
   let recovered = false
   for (let attempt = 0; attempt < 20; attempt++) { if ((await status()).connected) { recovered = true; break } await sleep(500) }
   assert.equal(recovered, true, 'Next request should recover without an application restart')
