@@ -1,3 +1,5 @@
+# Default local PostgreSQL example. For all four engines, see compose.test.yaml
+# and the README's disposable integration fixture instructions.
 services:
   database:
     image: postgres:16-alpine

@@ -1,0 +1,60 @@
+# Disposable integration fixtures only. Never reuse these credentials for deployment.
+services:
+  postgresql:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: probe
+      POSTGRES_PASSWORD: fixture-postgres-password
+      POSTGRES_DB: probe
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U probe -d probe']
+      interval: 2s
+      timeout: 3s
+      retries: 60
+  mysql:
+    image: mysql:8.4.13
+    environment:
+      MYSQL_ROOT_PASSWORD: fixture-mysql-root-password
+      MYSQL_DATABASE: probe
+      MYSQL_USER: probe
+      MYSQL_PASSWORD: fixture-mysql-password
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -uprobe -p$$MYSQL_PASSWORD --silent']
+      interval: 2s
+      timeout: 3s
+      retries: 90
+  mariadb:
+    image: mariadb:11.4.13
+    environment:
+      MARIADB_ROOT_PASSWORD: fixture-mariadb-root-password
+      MARIADB_DATABASE: probe
+      MARIADB_USER: probe
+      MARIADB_PASSWORD: fixture-mariadb-password
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 2s
+      timeout: 3s
+      retries: 90
+  redis:
+    image: redis:8.2.11-alpine
+    command: ['redis-server', '--requirepass', 'fixture-redis-password', '--save', '', '--appendonly', 'no']
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', 'fixture-redis-password', 'ping']
+      interval: 2s
+      timeout: 3s
+      retries: 60
+  web:
+    build: .
+    image: deployment-multi-db-check:ci
+    environment:
+      DB_ENGINE: ${DB_ENGINE:-postgresql}
+      DATABASE_URL: ${TEST_DATABASE_URL:-postgresql://probe:fixture-postgres-password@postgresql:5432/probe}
+      REDIS_URL: redis://:fixture-redis-password@redis:6379/2
+      HOST: 0.0.0.0
+      PORT: '3000'
+    ports: ['127.0.0.1:13000:3000']
+    depends_on:
+      postgresql: { condition: service_healthy }
+      mysql: { condition: service_healthy }
+      mariadb: { condition: service_healthy }
+      redis: { condition: service_healthy }

@@ -10,7 +10,7 @@ export default defineNuxtConfig({
       title: 'TEST FE WITH DB',
       htmlAttrs: { lang: 'en' },
       meta: [
-        { name: 'description', content: 'PostgreSQL 16 connectivity dashboard with three sample data tables.' },
+        { name: 'description', content: 'PostgreSQL, MySQL, MariaDB, or Redis connectivity dashboard with three sample data tables.' },
         { name: 'theme-color', content: '#F9FBFD' }
       ]
     }

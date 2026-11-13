@@ -1,18 +1,8 @@
 <script setup lang="ts">
+import { databaseEngineLabels } from '#shared/types/database'
+import type { DatabaseStatus } from '#shared/types/database'
 type TabKey = 'services' | 'databases' | 'deployments'
 type CellValue = string | number
-
-type DatabaseStatus = {
-  connected: boolean
-  configured: boolean
-  database: string | null
-  expectedVersion: number
-  versionMajor: number | null
-  versionLabel: string | null
-  latencyMs: number | null
-  checkedAt: string
-  message: string
-}
 
 type SampleData = {
   generatedAt: string
@@ -55,7 +45,7 @@ const tables: Record<TabKey, TableDefinition> = {
   },
   databases: {
     title: 'Database workloads',
-    description: 'Generated examples of PostgreSQL workloads, owners, and capacity signals.',
+    description: 'Generated examples of database workloads, owners, and capacity signals.',
     columns: [
       { key: 'id', label: 'Workload ID' },
       { key: 'name', label: 'Database name' },
@@ -83,6 +73,9 @@ const activeTab = ref<TabKey>('services')
 const tabRefs = ref<HTMLButtonElement[]>([])
 const { data: databaseStatus, pending: databasePending, refresh: refreshDatabaseStatus } = await useFetch<DatabaseStatus>('/api/database-status')
 const { data: sampleData } = await useFetch<SampleData>('/api/sample-data')
+const engineLabel = computed(() => databaseStatus.value?.engine ? databaseEngineLabels[databaseStatus.value.engine] : 'Database')
+const engineVersionLabel = computed(() => databaseStatus.value?.versionMajor == null ? engineLabel.value : `${engineLabel.value} ${databaseStatus.value.versionMajor}`)
+const databaseLabel = computed(() => databaseStatus.value?.engine === 'redis' ? `Redis DB ${databaseStatus.value.database}` : databaseStatus.value?.database)
 
 const activeTable = computed(() => tables[activeTab.value])
 const activeRows = computed(() => sampleData.value?.[activeTab.value] ?? [])
@@ -125,10 +118,10 @@ onBeforeUnmount(() => {
   <main class="page-shell">
     <section class="hero" aria-labelledby="page-title">
       <div class="hero__copy">
-        <p class="eyebrow">NEO App · PostgreSQL connectivity test</p>
+        <p class="eyebrow">NEO App · Database connectivity test</p>
         <h1 id="page-title"><span>TEST FE</span> WITH DB</h1>
         <p class="hero__lead">
-          A focused deployment surface that validates a PostgreSQL 16 connection and presents three generated operational datasets.
+          Check a PostgreSQL, MySQL, MariaDB, or Redis connection and explore three generated operational datasets.
         </p>
       </div>
 
@@ -136,11 +129,11 @@ onBeforeUnmount(() => {
         class="database-card"
         :class="`database-card--${statusState}`"
         aria-live="polite"
-        aria-label="PostgreSQL connection status"
+        :aria-label="`${engineLabel} connection status`"
       >
         <div class="database-card__header">
           <p class="database-card__label">Database connection</p>
-          <span class="database-card__version">PostgreSQL 16</span>
+          <span class="database-card__version" :title="databaseStatus?.versionLabel ?? undefined">{{ engineVersionLabel }}</span>
         </div>
 
         <div class="database-card__status">
@@ -154,7 +147,7 @@ onBeforeUnmount(() => {
         <div class="database-card__footer">
           <span class="database-card__meta">
             <template v-if="databaseStatus?.connected">
-              {{ databaseStatus.database }} · {{ databaseStatus.latencyMs }} ms
+              {{ databaseLabel }} · {{ databaseStatus.latencyMs }} ms
             </template>
             <template v-else>Read-only connection probe</template>
           </span>
@@ -169,7 +162,7 @@ onBeforeUnmount(() => {
       <div class="section-heading">
         <div>
           <h2 id="sample-data-title">Sample operational data</h2>
-          <p>Randomized on each server response. These rows are not stored in PostgreSQL.</p>
+          <p>Randomized on each server response. These rows are not stored in the database.</p>
         </div>
         <span class="sample-badge">Sample only</span>
       </div>
@@ -214,7 +207,7 @@ onBeforeUnmount(() => {
     </section>
 
     <footer class="page-footer">
-      <span>Connection probe: read-only PostgreSQL query</span>
+      <span>Connection probe: read-only {{ engineLabel }} check</span>
       <span>Sample generated {{ sampleData?.generatedAt ? new Date(sampleData.generatedAt).toLocaleString('en-GB') : 'on request' }}</span>
     </footer>
   </main>

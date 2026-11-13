@@ -16,11 +16,16 @@
     "tokens:build": "node scripts/build-tokens.mjs",
     "tokens:check": "node scripts/build-tokens.mjs --check",
     "typecheck": "nuxt typecheck",
-    "check": "pnpm tokens:check && pnpm typecheck && node scripts/check.mjs"
+    "check": "pnpm tokens:check && pnpm typecheck && node scripts/check.mjs",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "test:integration": "node --experimental-strip-types --test test/integration/*.test.ts"
   },
   "dependencies": {
     "nuxt": "4.5.2",
-    "pg": "8.23.0"
+    "pg": "8.23.0",
+    "mysql2": "3.24.6",
+    "mariadb": "3.5.5",
+    "redis": "6.3.1"
   },
   "devDependencies": {
     "@rollup/wasm-node": "4.63.5",
