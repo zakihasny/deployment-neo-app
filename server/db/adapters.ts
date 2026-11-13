@@ -62,7 +62,9 @@ export function createDatabaseProbe(config: ProbeConfiguration): DatabaseProbe {
     let client: Awaited<ReturnType<typeof mariadb.createConnection>> | undefined
     return {
       async run() {
-        client = await mariadb.createConnection({ ...networkOptions, connectTimeout: 4500, socketTimeout: 4500, queryTimeout: 4500,
+        // The application deadline/socket timeout also work when the peer identifies as MySQL.
+        // Connector queryTimeout would reject that peer before VERSION() can identify the mismatch.
+        client = await mariadb.createConnection({ ...networkOptions, connectTimeout: 4500, socketTimeout: 4500,
           multipleStatements: false, ...(config.tls ? { ssl: config.tls } : {}) })
         if (cancelled) { client.destroy(); throw new Error('Probe cancelled') }
         const rows = await client.query('SELECT DATABASE() AS database_name, VERSION() AS server_version')
