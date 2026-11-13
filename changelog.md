@@ -7,3 +7,6 @@
 - Added the `TEST FE WITH DB` hero and accessible green/red database status indicator.
 - Added three secondary tabs with responsive randomized sample tables.
 - Added read-only database probing, process health, Dockerfile, local Compose, environment example and deployment instructions.
+
+## 2026-11-13
+- Display four accessible database status cards with independent probes, aggregate API, manual refresh and 30-second polling. Preserve sample tabs and process liveness.

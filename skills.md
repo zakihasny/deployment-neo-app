@@ -2,7 +2,7 @@
 
 ## Scope
 
-This project is a standalone Nuxt Web Service for validating a read-only connection to NEO DB PostgreSQL 16. It contains one hero, one accessible database status indicator, and exactly three secondary tabs with generated sample tables. Sample rows are never written to PostgreSQL.
+This project is a standalone Nuxt Web Service for validating independent read-only connections to PostgreSQL, MySQL, MariaDB and Redis. It contains one hero, four accessible database status cards, and exactly three secondary tabs with generated sample tables. Sample rows are never written to PostgreSQL.
 
 ## Runtime contract
 
@@ -11,7 +11,7 @@ This project is a standalone Nuxt Web Service for validating a read-only connect
 - `GET /healthz` is process liveness and never depends on the database.
 - `GET /api/database-status` performs a bounded read-only query using `DATABASE_URL` and never exposes connection errors or credentials.
 - The real `DATABASE_URL` belongs in NEO App environment variables or managed-resource binding, never source control.
-- NEO DB must use PostgreSQL 16. Keep its public endpoint disabled unless an explicitly reviewed external-access requirement exists.
+- The aggregate endpoint uses POSTGRES_URL, MYSQL_URL, MARIADB_URL and REDIS_URL; the singular endpoint retains its legacy configuration. Versions are informational. Keep its public endpoint disabled unless an explicitly reviewed external-access requirement exists.
 
 ## Design contract
 

@@ -56,12 +56,16 @@ test('real driver, compiled HTTP application, dependency failure and recovery', 
   for (const tab of ['Service inventory', 'Database workloads', 'Deployment events']) assert.ok(html.includes(tab))
   const sample = await (await fetch('http://127.0.0.1:13000/api/sample-data')).json()
   for (const table of ['services', 'databases', 'deployments']) assert.equal(sample[table].length, 8)
+  const aggregate = await (await fetch('http://127.0.0.1:13000/api/databases-status')).json()
+  assert.deepEqual(aggregate.databases.map((s: DatabaseStatus) => s.engine), ['postgresql', 'mysql', 'mariadb', 'redis'])
+  assert.ok(aggregate.databases.every((s: DatabaseStatus) => s.connected), 'All four fixture databases must connect')
   const parallel = await Promise.all(Array.from({ length: 6 }, () => status()))
   assert.ok(parallel.every(value => value.connected))
   assert.equal(JSON.stringify(connected).includes('fixture-'), false)
 
   const wrongUrl = urls[engine].replace(/fixture-[a-z]+-password/, 'wrong-password')
-  await oneOff({ DB_ENGINE: engine, DATABASE_URL: wrongUrl, REDIS_URL: wrongUrl }, async () => {
+  const aggregateKey = { postgresql: 'POSTGRES_URL', mysql: 'MYSQL_URL', mariadb: 'MARIADB_URL', redis: 'REDIS_URL' }[engine]
+  await oneOff({ DB_ENGINE: engine, DATABASE_URL: wrongUrl, REDIS_URL: wrongUrl, [aggregateKey]: wrongUrl }, async () => {
     const failed = await status(13001)
     assert.equal(failed.connected, false); assert.equal(failed.configured, true)
     assert.equal((await fetch('http://127.0.0.1:13001/healthz')).status, 200)
@@ -69,7 +73,7 @@ test('real driver, compiled HTTP application, dependency failure and recovery', 
     assert.match(failedHtml, /Not connected/); assert.ok(failedHtml.includes(labels[engine]))
     assert.equal(JSON.stringify(failed).includes('wrong-password'), false)
   })
-  await oneOff({ DB_ENGINE: engine, DATABASE_URL: '', REDIS_URL: '' }, async () => {
+  await oneOff({ DB_ENGINE: engine, DATABASE_URL: '', POSTGRES_URL: '', REDIS_URL: '' }, async () => {
     const missing = await status(13001); assert.equal(missing.configured, false); assert.equal(missing.connected, false)
     assert.equal((await fetch('http://127.0.0.1:13001/healthz')).status, 200)
   })
@@ -104,6 +108,8 @@ test('real driver, compiled HTTP application, dependency failure and recovery', 
   const started = Date.now(), unavailable = await status()
   assert.equal(unavailable.connected, false); assert.ok(Date.now() - started < 6500, 'Probe must remain bounded')
   assert.equal((await fetch('http://127.0.0.1:13000/healthz')).status, 200)
+  const partial = await (await fetch('http://127.0.0.1:13000/api/databases-status')).json()
+  assert.deepEqual(partial.databases.filter((s: DatabaseStatus) => !s.connected).map((s: DatabaseStatus) => s.engine), [engine])
   compose('start', engine)
   let recovered = false
   for (let attempt = 0; attempt < 20; attempt++) { if ((await status()).connected) { recovered = true; break } await sleep(500) }

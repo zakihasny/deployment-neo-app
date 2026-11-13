@@ -71,22 +71,13 @@ const tables: Record<TabKey, TableDefinition> = {
 
 const activeTab = ref<TabKey>('services')
 const tabRefs = ref<HTMLButtonElement[]>([])
-const { data: databaseStatus, pending: databasePending, refresh: refreshDatabaseStatus } = await useFetch<DatabaseStatus>('/api/database-status')
+const { data: statuses, pending: databasePending, refresh: refreshDatabaseStatus } = await useFetch<{ databases: DatabaseStatus[] }>('/api/databases-status')
 const { data: sampleData } = await useFetch<SampleData>('/api/sample-data')
-const engineLabel = computed(() => databaseStatus.value?.engine ? databaseEngineLabels[databaseStatus.value.engine] : 'Database')
-const engineVersionLabel = computed(() => databaseStatus.value?.versionMajor == null ? engineLabel.value : `${engineLabel.value} ${databaseStatus.value.versionMajor}`)
-const databaseLabel = computed(() => databaseStatus.value?.engine === 'redis' ? `Redis DB ${databaseStatus.value.database}` : databaseStatus.value?.database)
-
+const databaseStatuses = computed(() => statuses.value?.databases ?? [])
 const activeTable = computed(() => tables[activeTab.value])
 const activeRows = computed(() => sampleData.value?.[activeTab.value] ?? [])
-const statusState = computed(() => {
-  if (databasePending.value) return 'checking'
-  return databaseStatus.value?.connected ? 'connected' : 'disconnected'
-})
-const statusTitle = computed(() => {
-  if (statusState.value === 'checking') return 'Checking connection'
-  return statusState.value === 'connected' ? 'Connected' : 'Not connected'
-})
+function engineLabel(status: DatabaseStatus) { return status.engine ? databaseEngineLabels[status.engine] : 'Database' }
+function versionLabel(status: DatabaseStatus) { return status.versionMajor == null ? engineLabel(status) : engineLabel(status) + ' ' + status.versionMajor }
 
 function activateTab(key: TabKey, index?: number) {
   activeTab.value = key
@@ -121,41 +112,29 @@ onBeforeUnmount(() => {
         <p class="eyebrow">NEO App · Database connectivity test</p>
         <h1 id="page-title"><span>TEST FE</span> WITH DB</h1>
         <p class="hero__lead">
-          Check a PostgreSQL, MySQL, MariaDB, or Redis connection and explore three generated operational datasets.
+          Check PostgreSQL, MySQL, MariaDB, and Redis connections and explore three generated operational datasets.
         </p>
       </div>
 
-      <aside
-        class="database-card"
-        :class="`database-card--${statusState}`"
-        aria-live="polite"
-        :aria-label="`${engineLabel} connection status`"
-      >
+      <div class="database-grid">
+      <aside v-for="status in databaseStatuses" :key="status.engine ?? 'unknown'"
+        class="database-card" :class="'database-card--' + (databasePending ? 'checking' : status.connected ? 'connected' : 'disconnected')"
+        aria-live="polite" :aria-label="engineLabel(status) + ' connection status'">
         <div class="database-card__header">
-          <p class="database-card__label">Database connection</p>
-          <span class="database-card__version" :title="databaseStatus?.versionLabel ?? undefined">{{ engineVersionLabel }}</span>
+          <p class="database-card__label">{{ engineLabel(status) }} connection</p>
+          <span class="database-card__version" :title="status.versionLabel ?? undefined">{{ versionLabel(status) }}</span>
         </div>
-
         <div class="database-card__status">
           <span class="status-dot" aria-hidden="true" />
-          <div class="status-copy">
-            <strong>{{ statusTitle }}</strong>
-            <span>{{ databaseStatus?.message ?? 'Waiting for the first health check.' }}</span>
-          </div>
+          <div class="status-copy"><strong>{{ databasePending ? 'Checking connection' : status.connected ? 'Connected' : 'Not connected' }}</strong>
+            <span>{{ status.message }}</span></div>
         </div>
-
         <div class="database-card__footer">
-          <span class="database-card__meta">
-            <template v-if="databaseStatus?.connected">
-              {{ databaseLabel }} · {{ databaseStatus.latencyMs }} ms
-            </template>
-            <template v-else>Read-only connection probe</template>
-          </span>
-          <button class="btn" type="button" :disabled="databasePending" @click="refreshDatabaseStatus()">
-            {{ databasePending ? 'Checking…' : 'Check again' }}
-          </button>
+          <span class="database-card__meta">{{ status.connected ? (status.engine === 'redis' ? 'Redis DB ' : '') + status.database + ' · ' + status.latencyMs + ' ms' : 'Read-only connection probe' }}</span>
+          <button class="btn" type="button" :disabled="databasePending" @click="refreshDatabaseStatus()">{{ databasePending ? 'Checking…' : 'Check again' }}</button>
         </div>
       </aside>
+      </div>
     </section>
 
     <section class="content-section" aria-labelledby="sample-data-title">
@@ -207,7 +186,7 @@ onBeforeUnmount(() => {
     </section>
 
     <footer class="page-footer">
-      <span>Connection probe: read-only {{ engineLabel }} check</span>
+      <span>Connection probes: read-only checks for all four engines</span>
       <span>Sample generated {{ sampleData?.generatedAt ? new Date(sampleData.generatedAt).toLocaleString('en-GB') : 'on request' }}</span>
     </footer>
   </main>

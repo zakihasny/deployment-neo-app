@@ -469,3 +469,9 @@ a:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+.database-grid { display: grid; gap: 16px; min-width: 0; }
+@media (min-width: 1200px) { .database-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.hero { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 800px) { .database-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

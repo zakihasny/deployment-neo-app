@@ -47,6 +47,9 @@ services:
     build: .
     image: deployment-multi-db-check:ci
     environment:
+      POSTGRES_URL: postgresql://probe:fixture-postgres-password@postgresql:5432/probe
+      MYSQL_URL: mysql://probe:fixture-mysql-password@mysql:3306/probe
+      MARIADB_URL: mysql://probe:fixture-mariadb-password@mariadb:3306/probe
       DB_ENGINE: ${DB_ENGINE:-postgresql}
       DATABASE_URL: ${TEST_DATABASE_URL:-postgresql://probe:fixture-postgres-password@postgresql:5432/probe}
       REDIS_URL: redis://:fixture-redis-password@redis:6379/2

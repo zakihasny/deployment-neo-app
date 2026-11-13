@@ -29,7 +29,7 @@ export function resolveConfiguration(environment: DatabaseEnvironment): ProbeCon
   const fail = (message: string): never => { throw new ConfigurationError(message, engine) }
   if (!engine) return fail('DB_ENGINE must be postgresql, mysql, mariadb, or redis.')
   const variable = engine === 'redis' ? 'REDIS_URL' : 'DATABASE_URL'
-  const connectionString = environment[variable]?.trim()
+  const connectionString = (environment[variable] || (engine === 'postgresql' ? environment.POSTGRES_URL : undefined))?.trim()
   if (!connectionString) return fail(variable + ' is not configured.')
   let url: URL
   try { url = new URL(connectionString) } catch { return fail(variable + ' must be a valid connection URL.') }

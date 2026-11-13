@@ -140,3 +140,7 @@ The workflow runs on pushes to `multi-db-check` and supports manual invocation. 
 Unit tests cover selection, backward compatibility, URL/TLS validation, sanitized failures, version parsing, deadlines, overlapping checks, cleanup, and optional Redis metadata. Live integration tests cover compiled HTTP/SSR output and all three tabs, valid and invalid credentials, missing configuration, engine mismatches, database-independent liveness, dependency loss/recovery, restart, and zero application-data writes. Redis metadata restrictions are tested against a real limited ACL user.
 
 These fixtures use plaintext private-network connections. TLS configuration is unit-tested; successful TLS handshakes against real provider certificates are a separate deployment validation. CI validates rendered HTML and API behavior, not browser interaction or visual layout. Consult the branch's GitHub Actions results for actual run outcomes.
+
+## Simultaneous checks
+
+The dashboard checks all four engines using POSTGRES_URL, MYSQL_URL, MARIADB_URL and REDIS_URL. Bind each database using its distinct variable. GET /api/databases-status returns { databases: DatabaseStatus[] } in PostgreSQL, MySQL, MariaDB, Redis order, with independent bounded probes and no-store caching. An unavailable database does not hide other results. The legacy singular endpoint still uses DB_ENGINE and DATABASE_URL (with POSTGRES_URL fallback for PostgreSQL). Shared DB_TLS and DB_CA_FILE settings apply to all probes; no credentials are exposed.
