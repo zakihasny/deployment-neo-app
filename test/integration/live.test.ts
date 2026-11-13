@@ -81,6 +81,11 @@ test('real driver, compiled HTTP application, dependency failure and recovery', 
   }
   if (engine === 'mysql' || engine === 'mariadb') {
     const other = engine === 'mysql' ? 'mariadb' : 'mysql'
+    if (engine === 'mariadb') {
+      // Prime MySQL's caching_sha2_password fast-auth cache in this disposable fixture.
+      // The MariaDB adapter intentionally does not enable unauthenticated RSA-key retrieval.
+      await oneOff({ DB_ENGINE: 'mysql', DATABASE_URL: urls.mysql }, async () => assert.equal((await status(13001)).connected, true))
+    }
     await oneOff({ DB_ENGINE: engine, DATABASE_URL: urls[other] }, async () => {
       const mismatch = await status(13001); assert.equal(mismatch.connected, false); assert.match(mismatch.message, /Engine mismatch/)
     })

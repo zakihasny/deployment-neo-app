@@ -24,7 +24,7 @@ Select exactly one engine; credentials remain on the server.
 
 `postgres://` is also accepted. Leaving `DB_ENGINE` unset preserves existing PostgreSQL configuration. Engine values are trimmed and case insensitive. Redis ignores `DATABASE_URL`; SQL engines ignore `REDIS_URL`. Redis defaults to logical database index `0`. MySQL and MariaDB require a database name in the URL and are distinguished using the server version string. A mismatch is reported as an unsuccessful check.
 
-URL-encode usernames and passwords containing special characters. Never put real connection URLs in source control, browser configuration, build arguments, screenshots, or public logs. PostgreSQL may retain unrelated URL parameters; MySQL, MariaDB, and Redis URL query options are rejected to avoid silently ignoring connection/TLS settings.
+URL-encode usernames and passwords containing special characters. Never put real connection URLs in source control, browser configuration, build arguments, screenshots, or public logs. PostgreSQL may retain unrelated URL parameters; MySQL, MariaDB, and Redis URL query options are rejected to avoid silently ignoring connection/TLS settings. Engine-mismatch identification requires successful authentication and a version query; failures before that point remain generic connection failures. The MariaDB connector's unauthenticated RSA public-key retrieval is not enabled.
 
 | Additional variable | Default / purpose |
 | --- | --- |
